@@ -7,7 +7,7 @@ class Food:
         self.size = 5
         self.color = (0, 255, 0)
 
-    def render(self, surface):
+    def render(self, surface):    
         pygame.draw.circle(surface, self.color, (self.x, self.y), self.size)
         
 

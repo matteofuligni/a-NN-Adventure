@@ -5,6 +5,8 @@ from environment.ball import Ball
 from environment.object import Food, Obstacle
 import numpy as np
 
+np.random.seed(42) 
+
 # Initialize Pygame
 pygame.init()
 
@@ -23,11 +25,13 @@ ball_radius = 7
 
 ball = Ball(width // 2, height // 2, 1, 1, ball_radius, BLUE)
 #food = [Food(x, y) for x in range(0, width-50, 20) for y in range(0, height-50, 20)]
-food = [Food(x, y) for x in np.random.randint(20, width-20) for y in np.random.randint(20, height-20)]
+food = [Food(x, y) for x, y in np.random.randint(20, height-20, size=(10,2))]
+obstacles = [Obstacle(x, y) for x, y in np.random.randint(20, height-20, size=(10,2))]
 #food = [Food(x, y) for x, y in zip(np.random.randint(20, width-20, size=10), np.random.randint(20, height-20, size=10))]
 map = Map(width, height)
 map.add_ball(ball)
 map.add_food_list(food)
+map.add_obstacle_list(obstacles)
 map.render(window)
 
 # Main loop

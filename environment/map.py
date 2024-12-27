@@ -20,6 +20,9 @@ class Map:
         
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
+    
+    def add_obstacle_list(self, obstacle_list):
+        self.obstacles = obstacle_list
         
     def remove_ball(self, ball):
         self.balls.remove(ball)
@@ -50,6 +53,7 @@ class Map:
                     ball.gain_energy()
                     self.remove_food(food)
             for obstacle in self.obstacles:
+                obstacle.render(window)
                 if ball.x == obstacle.x and ball.y == obstacle.y:
                     ball.lose_energy()
                     if self.get_hp() == 0:
