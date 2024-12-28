@@ -16,6 +16,7 @@ class Ball:
         self.hp = 100
         self.neural_network = None
         self.vision = []
+        self.map = None
     
     def move_x(self):
         self.x += self.dvx
@@ -24,10 +25,16 @@ class Ball:
         self.y += self.dvy
         
     def turn_right(self):
-        self.dvx, self.dvy = self.dvy, -self.dvx
+        self.dvx, self.dvy = -self.dvy, self.dvx
         
     def turn_left(self):
-        self.dvx, self.dvy = -self.dvy, self.dvx
+        self.dvx, self.dvy = self.dvy, -self.dvx
+        
+    def set_map(self, map):
+        self.map = map
+        
+    def set_neural_network(self, neural_network):
+        self.neural_network = neural_network
         
     #def turn_right(self, angle):
     #    self.dvx, self.dvy = self.dvx * cos(angle) - self.dvy * sin(angle), self.dvx * sin(angle) + self.dvy * cos(angle)
@@ -71,17 +78,19 @@ class Ball:
     def render(self, surface):
         pygame.draw.circle(surface, self.color, self.get_position(), self.radius)
         
-    def ai_decision(self):
+    def ai_decision(self, ambience):
         if self.neural_network is not None:
-            self.vision = self.neural_network.get_vision()
-            decision = np.argmax(self.neural_network.decide(self.vision))
-            if decision == 1:
-                self.turn_right()
-            elif decision == 2:
+            self.vision = ambience
+            decision = np.argmax(self.neural_network.make_decision(self.vision))
+            if decision == 0:
                 self.turn_left()
-
-    def update(self):
-        self.ai_decision()
+            elif decision == 1:
+                self.turn_right()
+            else:
+                None
+                
+    def update(self, ambience):
+        self.ai_decision(ambience)
         self.move_x()
         self.move_y()
         self.age += 0.1
