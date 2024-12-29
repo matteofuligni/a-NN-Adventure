@@ -2,6 +2,14 @@
 from math import sin, cos
 import numpy as np
 import pygame
+from enum import Enum
+
+
+class Direction(Enum):
+    RIGHT = 1
+    LEFT = 2
+    UP = 3
+    DOWN = 4
 
 class Ball:
     def __init__(self, x, y, dvx, dvy, radius, color):
@@ -16,6 +24,7 @@ class Ball:
         self.hp = 100
         self.neural_network = None
         self.vision = []
+        self.vision_range = 50
         self.map = None
     
     def move_x(self):
@@ -29,6 +38,9 @@ class Ball:
         
     def turn_left(self):
         self.dvx, self.dvy = self.dvy, -self.dvx
+        
+    def invert_direction(self):
+        self.dvx, self.dvy = -self.dvx, -self.dvy
         
     def set_map(self, map):
         self.map = map
@@ -86,8 +98,10 @@ class Ball:
                 self.turn_left()
             elif decision == 1:
                 self.turn_right()
+            elif decision == 2:
+                self.invert_direction()
             else:
-                None
+                pass
                 
     def update(self, ambience):
         self.ai_decision(ambience)

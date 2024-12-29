@@ -1,10 +1,19 @@
 
 import pygame
 
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+BLUE2 = (0, 100, 255)
+
 class Map:
     def __init__(self, width, height):
         self.width = width
         self.height = height
+        self.display = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption('A NN Adventure')
+        self.clock = pygame.time.Clock()
+        #self.reset()
         self.balls = []
         self.food = []
         self.obstacles = []
@@ -44,17 +53,18 @@ class Map:
         for obstacle in self.obstacles:
             obstacle.render(wall)
             
-    def update(self, window):
+    def update(self):
+        self.display.fill(BLACK)  
         for ball in self.balls:
-            pygame.draw.circle(window, ball.color, ball.get_position(), ball.radius)
+            pygame.draw.circle(self.display, ball.color, ball.get_position(), ball.radius)
             ambience = self.get_ambience(ball)
             for food in self.food:
-                food.render(window)
+                food.render(self.display)
                 if ball.x == food.x and ball.y == food.y:
                     ball.gain_energy()
                     self.remove_food(food)
             for obstacle in self.obstacles:
-                obstacle.render(window)
+                obstacle.render(self.display)
                 if ball.x == obstacle.x and ball.y == obstacle.y:
                     ball.lose_energy()
                     if self.get_hp() == 0:
@@ -64,8 +74,11 @@ class Map:
                 self.remove_ball(ball)
             ball.update(ambience)
             
+        text = pygame.font.SysFont('arial', 25).render("hp: " + str(ball.hp), True, WHITE)
+        self.display.blit(text, [0, 0])
+            
     def get_ambience(self, ball):
-        vision_range = 8
+        vision_range = ball.vision_range
         ambience = []
         for x in range(ball.x - vision_range, ball.x + vision_range + 1):
             for y in range(ball.y - vision_range, ball.y + vision_range + 1):
