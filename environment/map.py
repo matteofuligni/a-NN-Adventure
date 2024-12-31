@@ -5,6 +5,8 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 BLUE2 = (0, 100, 255)
+SPEED = 80
+
 
 class Map:
     def __init__(self, width, height):
@@ -53,30 +55,6 @@ class Map:
         for obstacle in self.obstacles:
             obstacle.render(wall)
             
-    def update(self):
-        self.display.fill(BLACK)  
-        for ball in self.balls:
-            pygame.draw.circle(self.display, ball.color, ball.get_position(), ball.radius)
-            ambience = self.get_ambience(ball)
-            for food in self.food:
-                food.render(self.display)
-                if ball.x == food.x and ball.y == food.y:
-                    ball.gain_energy()
-                    self.remove_food(food)
-            for obstacle in self.obstacles:
-                obstacle.render(self.display)
-                if ball.x == obstacle.x and ball.y == obstacle.y:
-                    ball.lose_energy()
-                    if self.get_hp() == 0:
-                        ball.alive = False
-            ball.is_outside_map(self.width, self.height)
-            if ball.get_status() == False:
-                self.remove_ball(ball)
-            ball.update(ambience)
-            
-        text = pygame.font.SysFont('arial', 25).render("hp: " + str(ball.hp), True, WHITE)
-        self.display.blit(text, [0, 0])
-            
     def get_ambience(self, ball):
         vision_range = ball.vision_range
         ambience = []
@@ -100,3 +78,54 @@ class Map:
                     if not found:
                         ambience.append((x, y, 0))  # Empty space
         return ambience
+    
+    def update(self):
+        self.display.fill(BLACK)  
+        for ball in self.balls:
+            pygame.draw.circle(self.display, ball.color, ball.get_position(), ball.radius)
+            ambience = self.get_ambience(ball)
+            ball.is_outside_map(self.width, self.height)
+            if ball.get_status() == False:
+                self.remove_ball(ball)
+            ball.update(ambience)
+        for food in self.food:
+            food.render(self.display)
+        for obstacle in self.obstacles:
+            obstacle.render(self.display)
+            
+        text = pygame.font.SysFont('arial', 25).render("hp: " + str(ball.hp), True, WHITE)
+        self.display.blit(text, [0, 0])
+        
+    def reset(self):
+        self.balls = []
+        self.food = []
+        self.obstacles = []
+        self.frame_iteration = 0
+            
+    def make_step(self, ball, move):
+        self.frame_iteration += 1
+        if self.frame_iteration > 1000:
+            game_over = True
+            ball.reward = -10
+            return ball.reward, game_over, ball.hp
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        ball.move(move)
+        ball.reward = 0
+        for food in self.food:
+            if ball.x == food.x and ball.y == food.y:
+                ball.gain_energy()
+                self.remove_food(food)
+                ball.reward += 10
+        for obstacle in self.obstacles:
+            if ball.x == obstacle.x and ball.y == obstacle.y:
+                ball.lose_energy()
+                ball.reward -= 10
+                if self.get_hp() == 0:
+                    ball.alive = False
+        self.clock.tick(SPEED)
+        self.update()
+        return ball.reward, game_over, ball.hp
+        
+        

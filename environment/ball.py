@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 from enum import Enum
 
+BLOCK_SIZE = 7
 
 class Direction(Enum):
     RIGHT = 1
@@ -22,10 +23,12 @@ class Ball:
         self.age = .0
         self.alive = True
         self.hp = 100
+        self.reward = 0
         self.neural_network = None
         self.vision = []
         self.vision_range = 50
         self.map = None
+        self.direction = Direction.RIGHT
     
     def move_x(self):
         self.x += self.dvx
@@ -108,6 +111,16 @@ class Ball:
         self.move_x()
         self.move_y()
         self.age += 0.1
+        
+    def move(self, action):
+        if self.direction == Direction.RIGHT:
+            self.x += BLOCK_SIZE
+        elif self.direction == Direction.LEFT:
+            self.x -= BLOCK_SIZE
+        elif self.direction == Direction.DOWN:
+            self.y += BLOCK_SIZE
+        elif self.direction == Direction.UP:
+            self.y -= BLOCK_SIZE
         
         # Sistemare il fattp che se il ball è fuori dallo schermo muore
         

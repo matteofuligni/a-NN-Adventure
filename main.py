@@ -21,6 +21,7 @@ BLUE = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 
 BLOCK_SIZE = 7
+SPEED = 80
 
 # Ball settings
 ball_radius = 7
@@ -45,9 +46,7 @@ i = 0
 # Main loop
 running = True
 while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    
         
        
     map.update()
