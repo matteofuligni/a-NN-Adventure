@@ -21,6 +21,9 @@ class Game:
         self.food = []
         self.obstacles = []
         self.walls = []
+        self.reward = 0
+        self.score = 0
+        self.game_over = False
         self.scree_color = screen_color
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("My First Game")
@@ -30,7 +33,9 @@ class Game:
         self.font = pygame.font.Font(None, 36)
         
     def reset(self):
+        self.reward = 0
         self.score = 0
+        self.game_over = False
         self.foods = []
         self._generate_food()
         self.balls = []
@@ -41,11 +46,8 @@ class Game:
         self._generate_walls()
         self.frame_iteration = 0
         
-    def update_ui(self, key):
-        # Aggiornare la finestra
+    def update_ui(self):
         self.screen.fill(WHITE)
-        self.check_collision()
-        self.check_out_of_bounds()
         for food in self.foods:
             food.render(self.screen)
         for obstacle in self.obstacles:
@@ -53,15 +55,42 @@ class Game:
         for wall in self.walls:
             wall.render(self.screen)
         for ball in self.balls:
-            ball.change_direction(key)
-            ball.move()
             ball.render(self.screen)
-            health = ball.health
-            if health <= 0:
-                self.reset()
-        text = self.font.render("Health: " + str(health), True, BLACK)
+        text = self.font.render("Health: " + str(ball.health), True, BLACK)
         self.screen.blit(text, [BLOCK_SIZE*1.1, BLOCK_SIZE*1.1])
         pygame.display.flip()
+        
+    def play_step(self, key): 
+        self.frame_iteration += 1
+        for ball in self.balls:
+            ball.change_direction(key)
+            ball.move()
+            self.check_collision()
+            self.check_out_of_bounds()
+            health = ball.health
+            if health <= 0:
+                self.reward = 10
+                self.game_over = True
+            if self.frame_iteration > 1000:
+                self.reward = -10
+                self.game_over = True
+        return self.reward, self.game_over
+    
+    def play_step_AI(self, action): 
+        self.frame_iteration += 1
+        for ball in self.balls:
+            ball.change_direction(action)
+            ball.move()
+            self.check_collision()
+            self.check_out_of_bounds()
+            health = ball.health
+            if health <= 0:
+                self.reward = -10
+                self.game_over = True
+            if self.frame_iteration > 1000:
+                self.reward = -10
+                self.game_over = True
+        return self.reward, self.game_over, health
         
     def _generate_ball(self):
         self.balls.append(Ball(WIDTH // 2 + BLOCK_SIZE//2, HEIGHT // 2 + BLOCK_SIZE//2, SPEED, 0, BLOCK_SIZE//2))
@@ -87,17 +116,17 @@ class Game:
         for ball in self.balls:
             for food in self.foods:
                 if distance(ball.x, ball.y, food.x, food.y) < ball.size + food.size:
-                    ball.health += 10
+                    self.score += 10
                     self.foods.remove(food)
                     self._generate_food(1)
             for obstacle in self.obstacles:
                 if distance(ball.x, ball.y, (obstacle.x + obstacle.size // 2), (obstacle.y + obstacle.size // 2)) < ball.size + obstacle.size//2:
-                    ball.health -= 10
+                    self.score -= 10
                     self.obstacles.remove(obstacle)
                     self._generate_obstacles(1)
             if ball.x - ball.size == BLOCK_SIZE or ball.x + ball.size == WIDTH - BLOCK_SIZE or ball.y - ball.size == BLOCK_SIZE or ball.y + ball.size == HEIGHT - BLOCK_SIZE:
-                ball.health -= 10
-                self.reset()
+                self.score -= 10
+                self.game_over = True
                 
     def _generate_walls(self):
         def generate_wall(x=0, y=0):
@@ -110,4 +139,4 @@ class Game:
     def check_out_of_bounds(self):
         for ball in self.balls:
             if ball.x < BLOCK_SIZE or ball.x > WIDTH - BLOCK_SIZE or ball.y < BLOCK_SIZE or ball.y > HEIGHT - BLOCK_SIZE:
-                self.reset()
+                self.game_over = True

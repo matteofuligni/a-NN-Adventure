@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 
 RED = (200,0,0)
 
@@ -30,6 +31,20 @@ class Ball:
             self.dx = 0
             self.dy = self.speed
             
+    def change_direction_AI(self, action):
+        if np.array_equal(action, [1, 0, 0, 0]):
+            self.dx = -self.speed
+            self.dy = 0
+        if np.array_equal(action, [0, 1, 0, 0]):
+            self.dx = self.speed
+            self.dy = 0
+        if np.array_equal(action, [0, 0, 1, 0]):
+            self.dx = 0
+            self.dy = -self.speed
+        if  np.array_equal(action, [0, 0, 0, 1]):
+            self.dx = 0
+            self.dy = self.speed
+            
     def move(self):
         self.x += self.dx
         self.y += self.dy
@@ -40,8 +55,7 @@ class Ball:
     def bounce(self):
         self.dx = -self.dx
         self.dy = -self.dy
-        
-        
+           
 class Food:
     def __init__(self, x, y):
         self.x = x

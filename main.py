@@ -32,7 +32,11 @@ if __name__ == "__main__":
                 running = False
 
         keys = pygame.key.get_pressed()
-        game.update_ui(keys)
+        reward, game_over = game.play_step(keys)
+        game.update_ui()
+        if game_over:
+            game.reset()
+        
 
         # Regolare il framerate
         pygame.time.Clock().tick(60)
