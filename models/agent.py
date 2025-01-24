@@ -45,7 +45,19 @@ def train():
         reward, game_over, score = game.play_step_AI(move)
         new_state = agent.get_state(game)
         
-        agent.train_short_memory()
+        agent.train_short_memory(state, move, reward, new_state, game_over)
+        agent.remember(state, move, reward, new_state, game_over)
+        
+        if game_over:
+            game.reset()
+            agent.n_games += 1
+            agent.train_long_memory()
+            
+            if score > record:
+                record = score
+                agent.model.save()
+            
+            print(f"Game {agent.n_games} Score: {score} Record: {record}")
         
         
 

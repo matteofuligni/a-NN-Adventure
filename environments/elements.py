@@ -55,6 +55,16 @@ class Ball:
     def bounce(self):
         self.dx = -self.dx
         self.dy = -self.dy
+        
+    def get_direction(self):
+        if self.dx == self.speed:
+            return [1, 0, 0, 0]
+        elif self.dx == -self.speed:
+            return [0, 1, 0, 0]
+        elif self.dy == self.speed:
+            return [0, 0, 1, 0]
+        else:
+            return [0, 0, 0, 1]
            
 class Food:
     def __init__(self, x, y):
@@ -65,6 +75,9 @@ class Food:
         
     def render(self, screen):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.size)
+        
+    def get_positoion(self):
+        return [self.x, self.y]
         
 class Obstacle:
     def __init__(self, x, y, shape="square"):
@@ -81,6 +94,9 @@ class Obstacle:
             pygame.draw.polygon(screen, self.color, [(self.x, self.y), (self.x + self.size, self.y), (self.x + self.size // 2, self.y - self.size)])
         else:
             pygame.draw.rect(screen, self.color, (self.x, self.y, self.size, self.size))
+    
+    def get_position(self):
+        return [self.x, self.y]
             
 class Wall:
     def __init__(self, x, y):
@@ -94,3 +110,5 @@ class Wall:
         pygame.draw.rect(screen, self.color_1, (self.x, self.y, self.size, self.size))
         pygame.draw.rect(screen, self.color_2, (self.x + self.size/5, self.y + self.size/5, 3*self.size/5, 3*self.size/5))
         
+    def get_position(self):
+        return [self.x, self.y]

@@ -1,5 +1,6 @@
 import pygame
 import random
+import numpy as np
 from environments.elements import Ball, Food, Obstacle, Wall
 
 WIDTH = 800
@@ -81,7 +82,7 @@ class Game:
         for ball in self.balls:
             ball.change_direction(action)
             ball.move()
-            self.check_collision()
+            self.check_collision(ball)
             self.check_out_of_bounds()
             health = ball.health
             if health <= 0:
@@ -92,6 +93,45 @@ class Game:
                 self.game_over = True
         return self.reward, self.game_over, health
         
+    def get_state(self):
+        for ball in self.balls:
+            state = []
+            state.append(ball.get_direction())
+            if self.check_obstacle(ball.x+BLOCK_SIZE, ball.y, ball.size) or self.check_wall(ball.x+BLOCK_SIZE, ball.y, ball.size):
+                state.append(1) 
+            else:
+                state.append(0)
+            if self.check_obstacle(ball.x-BLOCK_SIZE, ball.y, ball.size) or self.check_wall(ball.x-BLOCK_SIZE, ball.y, ball.size):
+                state.append(1)
+            else:
+                state.append(0)
+            if self.check_obstacle(ball.x, ball.y+BLOCK_SIZE, ball.size) or self.check_wall(ball.x, ball.y+BLOCK_SIZE, ball.size):
+                state.append(1)
+            else:
+                state.append(0)
+            if self.check_obstacle(ball.x, ball.y-BLOCK_SIZE, ball.size) or self.check_wall(ball.x, ball.y-BLOCK_SIZE, ball.size):
+                state.append(1)
+            else:
+                state.append(0)
+            if self.check_food(ball.x+BLOCK_SIZE, ball.y, ball.size):
+                state.append(1)
+            else:
+                state.append(0)
+            if self.check_food(ball.x-BLOCK_SIZE, ball.y, ball.size):
+                state.append(1)
+            else:
+                state.append(0)
+            if self.check_food(ball.x, ball.y+BLOCK_SIZE, ball.size):
+                state.append(1)
+            else:
+                state.append(0)
+            if self.check_food(ball.x, ball.y-BLOCK_SIZE, ball.size):    
+                state.append(1)
+            else:
+                state.append(0)
+            state.append(nearest_food = self.get_nearest_food(ball.x, ball.y))
+        return np.array(state, dtype=int)
+
     def _generate_ball(self):
         self.balls.append(Ball(WIDTH // 2 + BLOCK_SIZE//2, HEIGHT // 2 + BLOCK_SIZE//2, SPEED, 0, BLOCK_SIZE//2))
         
@@ -109,25 +149,86 @@ class Game:
             self.obstacles.append(Obstacle(x, y))
         [generate_obstacle() for _ in range(number_of_obstacles)]
         
-    def check_collision(self):
+    def check_collision(self, ball_x, ball_y, ball_size):
         def distance(x1, y1, x2, y2):
             return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
-        for ball in self.balls:
-            for food in self.foods:
-                if distance(ball.x, ball.y, food.x, food.y) < ball.size + food.size:
-                    self.score += 10
-                    self.foods.remove(food)
-                    self._generate_food(1)
-            for obstacle in self.obstacles:
-                if distance(ball.x, ball.y, (obstacle.x + obstacle.size // 2), (obstacle.y + obstacle.size // 2)) < ball.size + obstacle.size//2:
-                    self.score -= 10
-                    self.obstacles.remove(obstacle)
-                    self._generate_obstacles(1)
-            if ball.x - ball.size == BLOCK_SIZE or ball.x + ball.size == WIDTH - BLOCK_SIZE or ball.y - ball.size == BLOCK_SIZE or ball.y + ball.size == HEIGHT - BLOCK_SIZE:
+        for food in self.foods:
+            if distance(ball_x, ball_y, food.x, food.y) < ball_size + food.size:
+                self.score += 10
+                self.foods.remove(food)
+                self._generate_food(1)
+                return True
+        for obstacle in self.obstacles:
+            if distance(ball_x, ball_y, (obstacle.x + obstacle.size // 2), (obstacle.y + obstacle.size // 2)) < ball_size + obstacle.size//2:
                 self.score -= 10
-                self.game_over = True
+                self.obstacles.remove(obstacle)
+                self._generate_obstacles(1)
+                return True
+        if ball_x - ball_size == BLOCK_SIZE or ball_x + ball_size == WIDTH - BLOCK_SIZE or ball_y - ball_size == BLOCK_SIZE or ball_y + ball_size == HEIGHT - BLOCK_SIZE:
+            self.score -= 10
+            self.game_over = True
+            return True
+        return False
                 
+    def check_food(self, ball_x, ball_y, ball_size):
+        def distance(x1, y1, x2, y2):
+            return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+        for food in self.foods:
+            if distance(ball_x, ball_y, food.x, food.y) < ball_size + food.size:
+                self.score += 10
+                self.foods.remove(food)
+                self._generate_food(1)
+                return True
+        return False
+    
+    def check_obstacle(self, ball_x, ball_y, ball_size):
+        def distance(x1, y1, x2, y2):
+            return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+        for obstacle in self.obstacles:
+            if distance(ball_x, ball_y, (obstacle.x + obstacle.size // 2), (obstacle.y + obstacle.size // 2)) < ball_size + obstacle.size//2:
+                self.score -= 10
+                self.obstacles.remove(obstacle)
+                self._generate_obstacles(1)
+                return True
+        return False
+    
+    def check_wall(self, ball_x, ball_y, ball_size):
+        if ball_x - ball_size == BLOCK_SIZE or ball_x + ball_size == WIDTH - BLOCK_SIZE or ball_y - ball_size == BLOCK_SIZE or ball_y + ball_size == HEIGHT - BLOCK_SIZE:
+            self.score -= 10
+            self.game_over = True
+            return True
+        return False
+        
+    def get_nearest_food(self, ball_x, ball_y):
+        def distance(x1, y1, x2, y2):
+            return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+        min_distance = 0
+        state = []
+        for food in self.foods:
+            if distance(ball_x, ball_y, food.x, food.y) < min_distance:
+                min_distance = distance(ball_x, ball_y, food.x, food.y)
+                min_x, min_y = food.x, food.y
+        if min_x > ball_x:
+            state.append(1)
+        else:
+            state.append(0)
+        if min_x < ball_x:
+            state.append(1)
+        else:
+            state.append(0)
+        if min_y > ball_y:
+            state.append(1)
+        else:
+            state.append(0)
+        if min_y < ball_y:
+            state.append(1)
+        else:    
+            state.append(0)
+        return state
+
     def _generate_walls(self):
         def generate_wall(x=0, y=0):
             self.walls.append(Wall(x, y))
