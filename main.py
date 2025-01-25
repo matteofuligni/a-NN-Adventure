@@ -1,6 +1,6 @@
 import pygame
 import sys
-from environments import elements
+from . import elements
 from game import Game
 import random
 

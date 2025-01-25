@@ -1,7 +1,7 @@
 import pygame
 import random
 import numpy as np
-from environments.elements import Ball, Food, Obstacle, Wall
+from elements import Ball, Food, Obstacle, Wall
 
 WIDTH = 800
 HEIGHT = 600
@@ -13,9 +13,11 @@ BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
+pygame.init()
+font = pygame.font.Font("arial.ttf", 36)
 
 class Game:
-    def __init__(self, width, height, screen_color):
+    def __init__(self, width=WIDTH, height=HEIGHT, screen_color=WHITE):
         self.width = width
         self.height = height
         self.balls = []
@@ -31,7 +33,7 @@ class Game:
         self.screen.fill(self.scree_color)
         self.clock = pygame.time.Clock()
         self.reset()
-        self.font = pygame.font.Font(None, 36)
+        #self.font = pygame.font.Font("arial.ttf", 36)
         
     def reset(self):
         self.reward = 0
@@ -80,7 +82,7 @@ class Game:
     def play_step_AI(self, action): 
         self.frame_iteration += 1
         for ball in self.balls:
-            ball.change_direction(action)
+            ball.change_direction_AI(action)
             ball.move()
             self.check_collision(ball)
             self.check_out_of_bounds()
@@ -129,7 +131,7 @@ class Game:
                 state.append(1)
             else:
                 state.append(0)
-            state.append(nearest_food = self.get_nearest_food(ball.x, ball.y))
+            state.append(self.get_nearest_food(ball.x, ball.y))
         return np.array(state, dtype=int)
 
     def _generate_ball(self):
@@ -205,7 +207,7 @@ class Game:
     def get_nearest_food(self, ball_x, ball_y):
         def distance(x1, y1, x2, y2):
             return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-        min_distance = 0
+        min_distance = 10000
         state = []
         for food in self.foods:
             if distance(ball_x, ball_y, food.x, food.y) < min_distance:
@@ -215,17 +217,9 @@ class Game:
             state.append(1)
         else:
             state.append(0)
-        if min_x < ball_x:
-            state.append(1)
-        else:
-            state.append(0)
         if min_y > ball_y:
             state.append(1)
         else:
-            state.append(0)
-        if min_y < ball_y:
-            state.append(1)
-        else:    
             state.append(0)
         return state
 
