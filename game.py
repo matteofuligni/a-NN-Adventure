@@ -33,7 +33,7 @@ class Game:
         self.screen.fill(self.scree_color)
         self.clock = pygame.time.Clock()
         self.reset()
-        #self.font = pygame.font.Font("arial.ttf", 36)
+        self.font = pygame.font.Font("arial.ttf", 36)
         
     def reset(self):
         self.reward = 0
@@ -59,9 +59,10 @@ class Game:
             wall.render(self.screen)
         for ball in self.balls:
             ball.render(self.screen)
-        text = self.font.render("Health: " + str(ball.health), True, BLACK)
+        text = self.font.render("Score: " + str(self.score), True, BLACK)
         self.screen.blit(text, [BLOCK_SIZE*1.1, BLOCK_SIZE*1.1])
         pygame.display.flip()
+        pygame.time.Clock().tick(60)
         
     def play_step(self, key): 
         self.frame_iteration += 1
@@ -87,15 +88,24 @@ class Game:
             self.check_collision(ball)
             self.check_out_of_bounds()
             health = ball.health
-            if health <= 0:
+            if health < 0:
                 self.reward = -10
                 self.game_over = True
-            if self.frame_iteration > 1000:
+            if self.frame_iteration > 10000:
                 self.reward = -10
                 self.game_over = True
-        return self.reward, self.game_over, health
+        return self.reward, self.game_over, self.score
         
     def get_state(self):
+        def flatten_state(state):
+            flat_state = []
+            for item in state:
+                if isinstance(item, list):  # If the item is a list, extend the flat_state
+                    flat_state.extend(item)
+                else:  # If the item is an integer, append it directly
+                    flat_state.append(item)
+            return flat_state
+        
         for ball in self.balls:
             state = []
             state.append(ball.get_direction())
@@ -132,44 +142,50 @@ class Game:
             else:
                 state.append(0)
             state.append(self.get_nearest_food(ball.x, ball.y))
+            state = flatten_state(state)
         return np.array(state, dtype=int)
 
     def _generate_ball(self):
         self.balls.append(Ball(WIDTH // 2 + BLOCK_SIZE//2, HEIGHT // 2 + BLOCK_SIZE//2, SPEED, 0, BLOCK_SIZE//2))
         
-    def _generate_food(self, number_of_foods=10):
+    def _generate_food(self, number_of_foods=15):
         def generate_food():
             x = random.randint(1, (WIDTH//BLOCK_SIZE - 2)) * BLOCK_SIZE
             y = random.randint(1, (HEIGHT//BLOCK_SIZE - 2)) * BLOCK_SIZE
             self.foods.append(Food(x+BLOCK_SIZE//2, y+BLOCK_SIZE//2))
         [generate_food() for _ in range(number_of_foods)]
     
-    def _generate_obstacles(self, number_of_obstacles=15):
+    def _generate_obstacles(self, number_of_obstacles=0):
         def generate_obstacle():
             x = random.randint(1, (WIDTH//BLOCK_SIZE - 1)) * BLOCK_SIZE
             y = random.randint(1, (HEIGHT//BLOCK_SIZE - 1)) * BLOCK_SIZE
             self.obstacles.append(Obstacle(x, y))
         [generate_obstacle() for _ in range(number_of_obstacles)]
         
-    def check_collision(self, ball_x, ball_y, ball_size):
+    def check_collision(self, ball):
         def distance(x1, y1, x2, y2):
             return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-
+        ball_x, ball_y, ball_size = ball.x, ball.y, ball.size
         for food in self.foods:
             if distance(ball_x, ball_y, food.x, food.y) < ball_size + food.size:
                 self.score += 10
+                self.reward += 10
                 self.foods.remove(food)
                 self._generate_food(1)
+                ball.health += 10
                 return True
         for obstacle in self.obstacles:
             if distance(ball_x, ball_y, (obstacle.x + obstacle.size // 2), (obstacle.y + obstacle.size // 2)) < ball_size + obstacle.size//2:
                 self.score -= 10
+                self.reward -= 10
                 self.obstacles.remove(obstacle)
                 self._generate_obstacles(1)
+                ball.health -= 10
                 return True
         if ball_x - ball_size == BLOCK_SIZE or ball_x + ball_size == WIDTH - BLOCK_SIZE or ball_y - ball_size == BLOCK_SIZE or ball_y + ball_size == HEIGHT - BLOCK_SIZE:
             self.score -= 10
             self.game_over = True
+            ball.health -= 100
             return True
         return False
                 

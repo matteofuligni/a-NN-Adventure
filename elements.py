@@ -14,8 +14,8 @@ class Ball:
         self.dy = dy
         self.size = size
         self.color = (255, 0, 0)
-        self.speed = 20
-        self.health = 100
+        self.speed = BLOCK_SIZE
+        self.health = 10
         
     def change_direction(self, key):
         if key[pygame.K_LEFT]:
