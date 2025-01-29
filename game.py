@@ -21,7 +21,7 @@ class Game:
         self.width = width
         self.height = height
         self.balls = []
-        self.food = []
+        self.foods = []
         self.obstacles = []
         self.walls = []
         self.reward = 0
@@ -62,7 +62,7 @@ class Game:
         text = self.font.render("Score: " + str(self.score), True, BLACK)
         self.screen.blit(text, [BLOCK_SIZE*1.1, BLOCK_SIZE*1.1])
         pygame.display.flip()
-        pygame.time.Clock().tick(60)
+        self.clock.tick(60)
         
     def play_step(self, key): 
         self.frame_iteration += 1
@@ -85,14 +85,14 @@ class Game:
         for ball in self.balls:
             ball.change_direction_AI(action)
             ball.move()
-            self.check_collision(ball)
-            self.check_out_of_bounds()
-            health = ball.health
-            if health < 0:
-                self.reward = -10
-                self.game_over = True
+            self.game_over = self.check_collision(ball)
+            self.game_over = self.check_out_of_bounds()
+            #health = ball.health
+            #if health < 0:
+            #    self.reward = -10
+            #    self.game_over = True
             if self.frame_iteration > 10000:
-                self.reward = -10
+                #self.reward = -10
                 self.game_over = True
         return self.reward, self.game_over, self.score
         
@@ -148,7 +148,7 @@ class Game:
     def _generate_ball(self):
         self.balls.append(Ball(WIDTH // 2 + BLOCK_SIZE//2, HEIGHT // 2 + BLOCK_SIZE//2, SPEED, 0, BLOCK_SIZE//2))
         
-    def _generate_food(self, number_of_foods=15):
+    def _generate_food(self, number_of_foods=10):
         def generate_food():
             x = random.randint(1, (WIDTH//BLOCK_SIZE - 2)) * BLOCK_SIZE
             y = random.randint(1, (HEIGHT//BLOCK_SIZE - 2)) * BLOCK_SIZE
@@ -168,24 +168,23 @@ class Game:
         ball_x, ball_y, ball_size = ball.x, ball.y, ball.size
         for food in self.foods:
             if distance(ball_x, ball_y, food.x, food.y) < ball_size + food.size:
-                self.score += 10
-                self.reward += 10
+                self.score += 1
+                self.reward = 10
                 self.foods.remove(food)
                 self._generate_food(1)
-                ball.health += 10
-                return True
+                #ball.health += 10
         for obstacle in self.obstacles:
             if distance(ball_x, ball_y, (obstacle.x + obstacle.size // 2), (obstacle.y + obstacle.size // 2)) < ball_size + obstacle.size//2:
-                self.score -= 10
-                self.reward -= 10
+                self.score -= 1
+                self.reward = -10
                 self.obstacles.remove(obstacle)
                 self._generate_obstacles(1)
-                ball.health -= 10
+                #ball.health -= 10
                 return True
         if ball_x - ball_size == BLOCK_SIZE or ball_x + ball_size == WIDTH - BLOCK_SIZE or ball_y - ball_size == BLOCK_SIZE or ball_y + ball_size == HEIGHT - BLOCK_SIZE:
-            self.score -= 10
-            self.game_over = True
-            ball.health -= 100
+            self.reward = -10
+            #self.game_over = True
+            #ball.health -= 100
             return True
         return False
                 
@@ -195,9 +194,7 @@ class Game:
 
         for food in self.foods:
             if distance(ball_x, ball_y, food.x, food.y) < ball_size + food.size:
-                self.score += 10
-                self.foods.remove(food)
-                self._generate_food(1)
+                # Removed object removal and new generation
                 return True
         return False
     
@@ -207,15 +204,13 @@ class Game:
 
         for obstacle in self.obstacles:
             if distance(ball_x, ball_y, (obstacle.x + obstacle.size // 2), (obstacle.y + obstacle.size // 2)) < ball_size + obstacle.size//2:
-                self.score -= 10
-                self.obstacles.remove(obstacle)
-                self._generate_obstacles(1)
+                # Removed object removal and new generation
                 return True
         return False
     
     def check_wall(self, ball_x, ball_y, ball_size):
         if ball_x - ball_size == BLOCK_SIZE or ball_x + ball_size == WIDTH - BLOCK_SIZE or ball_y - ball_size == BLOCK_SIZE or ball_y + ball_size == HEIGHT - BLOCK_SIZE:
-            self.score -= 10
+            #self.score -= 10
             self.game_over = True
             return True
         return False
@@ -250,4 +245,5 @@ class Game:
     def check_out_of_bounds(self):
         for ball in self.balls:
             if ball.x < BLOCK_SIZE or ball.x > WIDTH - BLOCK_SIZE or ball.y < BLOCK_SIZE or ball.y > HEIGHT - BLOCK_SIZE:
-                self.game_over = True
+                return True
+        return False

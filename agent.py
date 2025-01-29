@@ -2,9 +2,11 @@ import torch
 import random
 import numpy as np
 from collections import deque
+import sys
 from game import Game
 from model import Model, Trainer
 from utils import plot
+import pygame
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 10000
@@ -16,7 +18,7 @@ class Agent:
         self.epsilon = 0
         self.gamma = .84
         self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = Model( 14, 512, 4)
+        self.model = Model( 14, 4096, 4)
         self.trainer = Trainer(self.model, LEARNING_RATE, self.gamma)
     
     def get_state(Self, game):
@@ -52,13 +54,20 @@ class Agent:
 def train():
     plot_scores = []
     plot_mean_scores = []
-    total_score = 0
-    best_score = 0
+    total_score = []
+    best_score = -100
     agent = Agent()
     game = Game()
     keep_training = True
     
+    pygame.init()
+    
     while keep_training:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
         state = game.get_state()
         move = agent.get_action(state)
         reward, game_over, score = game.play_step_AI(move)
@@ -79,9 +88,9 @@ def train():
             print(f"Game {agent.n_games} Score: {score} Best Score: {best_score}")
             
             plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
-            plot_mean_scores.append(mean_score)
+            total_score.append(score)
+            mean_last_50_scores = np.mean(total_score[-50:])
+            plot_mean_scores.append(mean_last_50_scores)
             plot(plot_scores, plot_mean_scores)
             
             game.reset()
