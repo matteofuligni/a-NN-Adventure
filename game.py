@@ -3,8 +3,8 @@ import random
 import numpy as np
 from elements import Ball, Food, Obstacle, Wall
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 600
+HEIGHT = 400
 BLOCK_SIZE = 20
 SPEED = 20
 WHITE = (255, 255, 255)
@@ -91,7 +91,7 @@ class Game:
             #if health < 0:
             #    self.reward = -10
             #    self.game_over = True
-            if self.frame_iteration > 10000:
+            if self.frame_iteration > 500:
                 #self.reward = -10
                 self.game_over = True
         return self.reward, self.game_over, self.score
@@ -148,7 +148,7 @@ class Game:
     def _generate_ball(self):
         self.balls.append(Ball(WIDTH // 2 + BLOCK_SIZE//2, HEIGHT // 2 + BLOCK_SIZE//2, SPEED, 0, BLOCK_SIZE//2))
         
-    def _generate_food(self, number_of_foods=10):
+    def _generate_food(self, number_of_foods=1):
         def generate_food():
             x = random.randint(1, (WIDTH//BLOCK_SIZE - 2)) * BLOCK_SIZE
             y = random.randint(1, (HEIGHT//BLOCK_SIZE - 2)) * BLOCK_SIZE
